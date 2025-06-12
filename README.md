@@ -1,41 +1,49 @@
-# AI Podcast Speaker Separation Tool
+# AI Podcast Speaker Diarization Tool
 
-A Python-based tool for automated speaker separation and voice activity detection in AI-generated podcast audio files. This tool is specifically designed to process podcasts created with AI platforms like NotebookLM, enabling precise separation of individual speaker tracks.
+A Python-based tool for automated speaker diarization and audio segmentation in AI-generated podcast audio files. This tool processes clean, single-channel audio to identify speaker segments and create organized output files for further analysis.
 
-## Overview
+This tool is specifically designed to process podcasts created with AI platforms like NotebookLM, where speakers typically alternate without overlap, enabling precise temporal segmentation of individual speaker contributions.
 
-This tool leverages deep learning models to automatically segment AI-generated podcast audio by speaker, creating clean, separated audio tracks for each voice. The tool is optimized for processing high-quality AI-generated content where speaker separation and individual track extraction are required.
+## What This Tool Actually Does
 
-**Key Features:**
-- Automated speaker detection and classification for AI-generated voices
-- Voice activity detection with silence/noise filtering  
+This tool leverages the inaSpeechSegmenter library to automatically segment AI-generated podcast audio by speaker through:
+
+- **Voice Activity Detection (VAD)**: Identifies speech vs. non-speech segments
+- **Gender-based Speaker Classification**: Distinguishes between male and female voices using acoustic features
+- **Temporal Segmentation**: Creates time-stamped speaker segments
+- **Multiple Output Formats**: Generates various file formats for different analytical needs
+
+**Important Note**: This tool performs speaker **diarization** (who spoke when) rather than speaker **separation** (isolating mixed voices). It works best with clean, single-channel audio where speakers alternate without significant overlap.
+
+## Key Features
+
+- Automated speaker diarization for clean AI-generated audio
+- Voice activity detection with silence/noise filtering
+- Gender-based speaker classification (male/female)
 - Multiple output formats for different processing needs
 - Preservation of original timing and conversational structure
-- Batch processing capabilities for multiple AI-generated episodes
+- Batch processing capabilities for multiple episodes
 - Optimized for clean AI-generated audio (NotebookLM, etc.)
 
 ## Use Cases
 
-- **AI Podcast Processing**: Clean separation of AI-generated speaker tracks from platforms like NotebookLM
-- **Audio Post-Processing**: Extract individual speaker channels for further audio manipulation
-- **Content Modification**: Enable speaker-specific audio processing and enhancement
-- **Technical Audio Analysis**: Generate precise speaker segmentation data with timestamps
+- **AI Podcast Analysis**: Segment AI-generated speaker tracks for temporal analysis
+- **Audio Organization**: Create speaker-specific audio files from clean recordings
+- **Content Analysis**: Generate precise speaker segmentation data with timestamps
+- **Research Applications**: Enable speaker-level analysis of conversational data
 - **Automated Workflows**: Integrate into larger audio processing pipelines
 
-## Installation
-
-### Prerequisites
+## Requirements
 
 - Python 3.10-3.12 (Note: Python 3.13 has compatibility issues with some dependencies)
 - ffmpeg (system-level installation required)
 
-### System Dependencies
+### Installing ffmpeg
 
 **macOS:**
 ```bash
 # Install Homebrew if not already installed
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
 # Install ffmpeg
 brew install ffmpeg
 ```
@@ -50,11 +58,10 @@ sudo apt install ffmpeg
 ```bash
 # Using Chocolatey
 choco install ffmpeg
-
 # Or download from https://ffmpeg.org/download.html and add to PATH
 ```
 
-### Python Dependencies
+## Installation
 
 ```bash
 # Create virtual environment (recommended)
@@ -68,9 +75,7 @@ pip install inaSpeechSegmenter pandas pydub resampy
 pip install pyaudioop
 ```
 
-## Usage
-
-### Basic Usage
+## Quick Start
 
 1. **Prepare your audio file**: Place your audio file (supported formats: .wav, .mp3, .m4a, .flac) in the project directory
 
@@ -84,32 +89,31 @@ pip install pyaudioop
    python podcast_speaker_separation.py
    ```
 
-### Advanced Usage
+## Usage
 
+### Basic Usage
 ```python
 from podcast_speaker_separation import PodcastSpeakerSeparator
 
-# Initialize the separator
+# Initialize the diarization tool
 separator = PodcastSpeakerSeparator("your_podcast.wav")
 
 # Run complete workflow
 results = separator.process_complete_workflow(
-    create_concatenated=True,    # Speaker-only audio (no timing)
-    create_synchronized=True,    # Timing-preserved audio
-    create_stereo=True,         # Stereo mix for comparative listening
-    create_archives=False       # Individual segment files
+    create_concatenated=True,  # Speaker-only audio (no timing gaps)
+    create_synchronized=True,  # Timing-preserved audio
+    create_stereo=True,        # Stereo mix for comparative listening
+    create_archives=False      # Individual segment files
 )
 
 # Access individual methods for custom workflows
-separator.segment_audio()  # Just perform segmentation
-separator.create_synchronized_tracks()  # Just create synchronized tracks
+separator.segment_audio()                    # Just perform diarization
+separator.create_synchronized_tracks()       # Just create synchronized tracks
 ```
 
 ## Output Files
 
 The tool generates several output files optimized for different analytical approaches:
-
-### Core Outputs
 
 - **`segmentation_output.csv`**: Detailed segmentation data with timestamps, speaker labels, and confidence scores
 - **`male_voice_concatenated.wav`**: All male speech segments joined sequentially (removes timing gaps)
@@ -118,49 +122,44 @@ The tool generates several output files optimized for different analytical appro
 - **`female_voice_synced.wav`**: Female speech with silence during male segments (preserves original timing)
 - **`stereo_mix.wav`**: Stereo audio with male voice on left channel, female on right channel
 
-### Segmentation Data Structure
+### CSV Output Structure
 
-The CSV output contains the following columns:
-- `labels`: Speaker classification ('male', 'female', 'noEnergy')
-- `start`: Segment start time in seconds
-- `stop`: Segment end time in seconds
+The segmentation CSV contains the following columns:
+- **`labels`**: Speaker classification ('male', 'female', 'noEnergy')
+- **`start`**: Segment start time in seconds
+- **`stop`**: Segment end time in seconds
 
-### Choosing the Right Output
+## When to Use Each Output Format
 
-**For Individual Speaker Processing:**
+**For Individual Speaker Analysis**:
 - Use concatenated files (`*_concatenated.wav`) when you need pure speaker content without timing gaps
 
-**For Timing-Preserved Processing:**
+**For Timing-Preserved Analysis**:
 - Use synchronized files (`*_synced.wav`) when you need to maintain the original conversational timing and structure
 - Use the segmentation CSV for precise timestamp data and automated processing
 
-**For Audio Comparison:**
+**For Audio Comparison**:
 - Use the stereo mix for side-by-side speaker comparison and quality control
 
 ## Technical Details
 
-### Speaker Segmentation Model
-
+### Underlying Technology
 The tool uses the inaSpeechSegmenter library, which employs:
 - **Voice Activity Detection (VAD)**: Identifies speech vs. non-speech segments
-- **Speaker Classification**: Gender-based classification using deep neural networks
-- **Segmentation**: Temporal boundary detection for speaker changes
+- **Gender Classification**: Binary classification using deep neural networks trained on acoustic features
+- **Temporal Boundary Detection**: Identifies speaker change points
 
-### Performance Considerations
-
-- **Processing Speed**: Approximately 2-3x real-time on modern hardware
+### Performance Characteristics
+- **Processing Speed**: Approximately 2-3x real-time on modern hardware for diarization
 - **Memory Usage**: Scales with audio file length; 8GB RAM recommended for files >2 hours
-- **Accuracy**: Gender classification accuracy >95% on clean audio; performance may vary with poor audio quality
+- **Classification Accuracy**: Gender classification performance depends on audio quality and speaker characteristics
 
 ### Supported Audio Formats
-
-- Primary: WAV (recommended for best quality)
-- Secondary: MP3, M4A, FLAC, OGG
+- **Primary**: WAV (recommended for best quality)
+- **Secondary**: MP3, M4A, FLAC, OGG
 - Automatic format conversion handled internally
 
-## Technical Integration
-
-### Integration with R
+## Integration with R
 
 For users working in R environments, you can call this tool from R:
 
@@ -174,9 +173,20 @@ system("python podcast_speaker_separation.py")
 
 # Read results into R for further processing
 segmentation_data <- read.csv("segmentation_output.csv")
+
+# Basic analysis example
+library(dplyr)
+speaker_stats <- segmentation_data %>%
+  filter(labels %in% c("male", "female")) %>%
+  group_by(labels) %>%
+  summarise(
+    total_time = sum(stop - start),
+    segment_count = n(),
+    avg_segment_length = mean(stop - start)
+  )
 ```
 
-### Batch Processing
+## Batch Processing
 
 For processing multiple AI-generated podcast files:
 
@@ -192,19 +202,20 @@ for audio_file in audio_files:
 
 ## Citation
 
-If you use this tool in your work, please cite:
+If you use this tool in your research, please cite:
 
 ```bibtex
-@software{ai_podcast_speaker_separation,
-  title={AI Podcast Speaker Separation Tool},
+@software{ai_podcast_speaker_diarization,
+  title={AI Podcast Speaker Diarization Tool},
   author={Eduardo Ryo Tamaki and Levente Littvay},
   year={2025},
   url={https://github.com/ertamaki/ai-podcast-speaker-separation},
-  note={Python tool for automated speaker separation in AI-generated podcast audio}
+  note={Python tool for automated speaker diarization in AI-generated podcast audio}
 }
 ```
 
-Also cite the underlying segmentation model:
+Also cite the underlying diarization model:
+
 ```bibtex
 @inproceedings{lavechin2020ina,
   title={End-to-end domain-adversarial voice activity detection},
@@ -217,38 +228,30 @@ Also cite the underlying segmentation model:
 
 ## Limitations and Considerations
 
-- **Gender Classification**: The model classifies speakers as 'male' or 'female' based on acoustic features, which may not align with gender identity
-- **Multiple Speakers**: Currently optimized for two-speaker scenarios; additional speakers may be misclassified
-- **Audio Quality**: Performance degrades with poor audio quality, background noise, or overlapping speech
-- **Language**: Trained primarily on English; performance on other languages may vary
+- **Binary Gender Classification**: The model classifies speakers as 'male' or 'female' based on acoustic features, which may not align with actual gender identity or accommodate non-binary speakers
+- **Single-Gender Scenarios**: Performance degrades when multiple speakers share similar gender classifications
+- **Audio Quality Dependency**: Performance requires clean, high-quality audio; degrades with background noise, overlapping speech, or poor recording conditions
+- **Language Limitations**: Trained primarily on English; performance on other languages may vary
+- **Two-Speaker Optimization**: Currently optimized for two-speaker scenarios; additional speakers may be misclassified
+- **Clean Audio Requirement**: Designed for clean AI-generated audio, not mixed or overlapping speech
 
-## Contributing
+## Troubleshooting
 
-Contributions are welcome! Please consider the following:
-
-### Technical Contributions
-- Support for additional AI-generated audio platforms
-- Performance optimizations for large file processing
-- Integration with additional speaker identification models
-- Better handling of overlapping speech in AI-generated content
-- Support for additional audio formats and codecs
-
-### Feature Requests
-- Enhanced batch processing capabilities
-- Integration with popular audio processing libraries
-- Command-line interface improvements
-- Docker containerization for deployment
-
-### Submitting Issues
-Please include:
+When reporting issues, please include:
 - Audio file characteristics (duration, format, source platform)
 - Error messages and full traceback
 - Expected vs. actual behavior
 - System information (OS, Python version)
 
-## License
+## Contributing
 
-[Choose appropriate license - MIT, GPL, Apache 2.0, etc.]
+Contributions are welcome! Areas for improvement include:
+- Support for additional AI-generated audio platforms
+- Performance optimizations for large file processing
+- Better handling of multi-speaker scenarios beyond binary gender classification
+- Enhanced batch processing capabilities
+- Command-line interface improvements
+- Docker containerization for deployment
 
 ## Acknowledgments
 
@@ -256,11 +259,11 @@ Please include:
 - Developed for AI-generated podcast processing applications
 - Optimized for high-quality AI-generated audio content
 
-## Contact
+## Authors
 
 Eduardo Ryo Tamaki and Levente Littvay  
-eduardo@tamaki.ai  
+[eduardo@tamaki.ai](mailto:eduardo@tamaki.ai)
 
 ---
 
-**Note**: This tool is optimized for AI-generated podcast content and may require parameter adjustments for other audio sources.
+**Note**: This tool is optimized for clean AI-generated podcast content and performs speaker diarization rather than source separation. It may require parameter adjustments for other audio sources or overlapping speech scenarios.
